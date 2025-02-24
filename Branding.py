@@ -117,11 +117,6 @@ def assign_company(desc):
     
     return company_mapping.get(brand, "Other")
     
-    for desc in examples:
-        brand = assign_grouped_brand(desc)
-        company = assign_company(desc)
-        print(f"Description: {desc}\n  -> Grouped Brand: {brand}\n  -> Company: {company}\n")
-
 data = pd.read_csv(r"C:/Users/behri/OneDrive/Desktop/Master LSE/Essay/Ideas/Pepsi Coke/cleaned_data.csv")
 
 data["BRAND"] = data["DESCRIP"].apply(assign_grouped_brand)
@@ -298,6 +293,8 @@ season_mapping = {
 
 data["season"] = data["quarter_number"].map(season_mapping)
 
+### CREATE HOLIDAY DUMMY ###
+
 # Cache to store holidays for a given year
 holiday_cache = {}
 
@@ -381,9 +378,12 @@ def is_holiday(holiday):
 
 data["holiday_indicator"] = data["holiday"].apply(is_holiday)
 unique_holiday_data = data[["holiday", "date"]].drop_duplicates()
-#Drop old flavours
+
+#Drop old columns
+
 data = data.drop(columns = ['PRICE_HEX', 'PROFIT_HEX', 'COM_CODE','Unnamed: 0.1', 'Unnamed: 0'])
 
+##Add further control variables
 data_demographics = pd.read_stata(r"C:/Users/behri/OneDrive/Desktop/Master LSE/Essay/Ideas/Pepsi Coke/demo.dta")
 
 data_demographics = data_demographics[data_demographics["mmid"].isna() == False]
@@ -405,5 +405,31 @@ columns_to_impute = ("age9", "age60", "ethnic", "educ", "nocar", "income", "hsiz
 
 for col in columns_to_impute:
     data[col] = impute_mean(data[col])
+
+
+## Remove Blood Glucose Screen (key: UPC = 179)
+data = data[data["UPC"] != 179]
+
+## Find the first month where there is more than just one brand (Pepsi)
+data_more_than_one_brand = data[(data["COMPANY"] != "PepsiCo")]
+data_more_than_one_brand = data_more_than_one_brand.sort_values(["WEEK"])
+data = data[data["WEEK"] >= 147]
+## Remove smaller brands (following Allender and Richards (2012) approach)
+
+# Identify the sum of sales of all brands and take 40 biggest brands
+data_sum_brands = data.groupby(by = ["UPC", "DESCRIP"], axis = 0)["MOVE"].sum()
+data_sum_brands = data_sum_brands.sort_values(ascending = False)
+data_sum_brands = data_sum_brands.iloc[0:39]
+
+# Merge to old dataframe (inner)
+data_new = data.merge(data_sum_brands, how = "inner", on = ["UPC", "DESCRIP"]) 
+data_new = data_new.rename(columns = {"MOVE_y": "SUM_MOVE", "MOVE_x": "MOVE"})
+data_new = data_new.sort_values(["WEEK"])
+
+
+## Add outside option - Definition as given by Mariuzzo (2003) - Determine the maximum daily consumption per person per day in Chicago and "relative market size" is 330ml per day 
+
+# 
+
 
 #data.to_csv(r"C:/Users/behri/OneDrive/Desktop/Master LSE/Essay/Ideas/Pepsi Coke/final_data.csv")
