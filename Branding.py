@@ -445,4 +445,4 @@ total_moves = data_consumption["total_moves"]
 data = data.merge(total_moves, on = "WEEK", how = "left")
 data["market_share"] = data["MOVE"] / data["total_moves"]
 
-#data.to_csv(r"C:/Users/behri/OneDrive/Desktop/Master LSE/Essay/Ideas/Pepsi Coke/final_data.csv")
+data.to_csv(r"C:/Users/behri/OneDrive/Desktop/Master LSE/Essay/Ideas/Pepsi Coke/final_data.csv")
