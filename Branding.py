@@ -423,12 +423,26 @@ data_sum_brands = data_sum_brands.iloc[0:39]
 
 # Merge to old dataframe (inner)
 data = data.merge(data_sum_brands, how = "inner", on = ["UPC", "DESCRIP"]) 
-data = data_new.rename(columns = {"MOVE_y": "SUM_MOVE", "MOVE_x": "MOVE"})
-data = data_new.sort_values(["WEEK"])
+data = data.rename(columns = {"MOVE_y": "SUM_MOVE", "MOVE_x": "MOVE"})
+data = data.sort_values(["WEEK"])
 
 
 ## Add outside option - Definition as given by Mariuzzo (2003) - Determine the maximum daily consumption per person per day in Chicago and "relative market size" is 330ml per day 
+data["total_liquid_sold"] = data["MOVE"] * data["Liquid_ml"]
+data_consumption = data.groupby(["WEEK"])[["total_liquid_sold", "MOVE"]].sum()
 
+#Because our model assumes that we only buy one "option" per customer, we can calculate the number of liquid consumed by those who came in the store per day per person
+data_demographics["household_mean"] = np.mean(data_demographics["hsizeavg"])
+data_consumption["daily_consumption"] = data_consumption["total_liquid_sold"] / (data_consumption["MOVE"] * 7 * data_demographics["hsizeavg"].mean())
 
+# Define potential market size as 500ml a day per person 
+avg_serving_size = (data["Liquid_ml"].mean()) / 7
+data_consumption["outside_move"] = (550 - data_consumption["daily_consumption"]) / avg_serving_size
+data_consumption["total_moves"] = data_consumption["MOVE"] + data_consumption["outside_move"]
+total_moves = data_consumption["total_moves"]
+
+# Calculate the market share as Move_i / Total_Move where Total_Move = Number of observed moves + outside_moves -> hypothetical market size of 500 ml consumption per person per day 
+data = data.merge(total_moves, on = "WEEK", how = "left")
+data["market_share"] = data["MOVE"] / data["total_moves"]
 
 #data.to_csv(r"C:/Users/behri/OneDrive/Desktop/Master LSE/Essay/Ideas/Pepsi Coke/final_data.csv")
