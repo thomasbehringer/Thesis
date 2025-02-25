@@ -426,6 +426,9 @@ data = data.merge(data_sum_brands, how = "inner", on = ["UPC", "DESCRIP"])
 data = data.rename(columns = {"MOVE_y": "SUM_MOVE", "MOVE_x": "MOVE"})
 data = data.sort_values(["WEEK"])
 
+# Create Brand-Dummies for Brand Loyalty 
+company_dummies = pd.get_dummies(data["COMPANY"], prefix = "brand_")
+data = pd.concat([data, company_dummies], axis = 1)
 
 ## Add outside option - Definition as given by Mariuzzo (2003) - Determine the maximum daily consumption per person per day in Chicago and "relative market size" is 330ml per day 
 data["total_liquid_sold"] = data["MOVE"] * data["Liquid_ml"]
@@ -445,4 +448,32 @@ total_moves = data_consumption["total_moves"]
 data = data.merge(total_moves, on = "WEEK", how = "left")
 data["market_share"] = data["MOVE"] / data["total_moves"]
 
-data.to_csv(r"C:/Users/behri/OneDrive/Desktop/Master LSE/Essay/Ideas/Pepsi Coke/final_data.csv")
+# Create distance metric in order to assess effective store coverage of a product 
+def calculate_effective_coverage(df):
+    
+    total_sales = df.groupby("WEEK")["MOVE"].sum().reset_index(name="total_move")
+    
+    
+    store_week_sales = df.groupby(["WEEK", "STORE"])["MOVE"].sum().reset_index(name="store_move")
+    store_week_sales = store_week_sales.merge(total_sales, on="WEEK")
+    store_week_sales["store_weight"] = store_week_sales["store_move"] / store_week_sales["total_move"]
+    
+    
+    store_products = df[["STORE", "WEEK", "NITEM"]].drop_duplicates()
+    store_products = store_products.merge(
+        store_week_sales[["STORE", "WEEK", "store_weight"]],
+        on=["WEEK", "STORE"],
+        how="left"
+    )
+    
+    
+    effective_cov = store_products.groupby(["WEEK", "NITEM"])["store_weight"].sum().reset_index(name="effective_coverage")
+    effective_cov["D_j"] = 1 - effective_cov["effective_coverage"]
+    
+    
+    df = df.merge(effective_cov, on=["WEEK", "NITEM"], how="left")
+    return df
+
+data = calculate_effective_coverage(data)
+
+#data.to_csv(r"C:/Users/behri/OneDrive/Desktop/Master LSE/Essay/Ideas/Pepsi Coke/final_data.csv")
