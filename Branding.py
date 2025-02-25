@@ -476,4 +476,21 @@ def calculate_effective_coverage(df):
 
 data = calculate_effective_coverage(data)
 
+
+### CREATE NESTING STRUCTURE ###
+
+# Note that the nesting structure is non-trivial and that there are potentially multiple levels to consider
+# I will first follow the nesting structure of Mariuzzo (2003) using certain product characteristics 
+# according to Berry(1994) - I consider 3 important variables that will determine substitution patterns:
+# Flavour (Cola, Lemon, Mixed Fruit, Orange, Other), Packaging (Cans, Larger Bottles, Multi-Packs, Single-Serve Bottles)
+# Diet/No Diet 
+
+def nest_allocation(data): 
+    def find_diet(row):
+        diet_label = "Diet" if row["Diet_Indicator"] == 1 else "Regular"
+        return f"{row['Flavour']} {diet_label} {row['PACKAGING']}"
+    data["nest"] = data.apply(find_diet, axis = 1)
+    return data 
+
+data = nest_allocation(data)
 #data.to_csv(r"C:/Users/behri/OneDrive/Desktop/Master LSE/Essay/Ideas/Pepsi Coke/final_data.csv")
