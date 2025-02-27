@@ -30,7 +30,7 @@ distances = []
 
 def compute_distance(row): 
     store_coords = (row["Latitude"], row["Longitude"])
-    return geodesic(store_coords, target).kilometers
+    return geodesic(store_coords, target).miles
 
 data_address["Distance"] = data_address.apply(compute_distance, axis = 1)
 
