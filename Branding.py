@@ -488,14 +488,20 @@ data = calculate_effective_coverage(data)
 def nest_allocation(data): 
     def find_diet(row):
         diet_label = "Diet" if row["Diet_Indicator"] == 1 else "Regular"
-        return f"{row['Flavour']} {diet_label} {row['PACKAGING']}"
+        return f"{row['Flavour']}"
     data["nest"] = data.apply(find_diet, axis = 1)
     return data 
 
 data = nest_allocation(data)
 
+## When creating the nests, I need to verify that there are at least two products in each market-nest combination so that there exists the possibility for the consumer to substitute between these products within the nest
+## Because I define a market as a STORE-WEEK combination, I need there to be at least two products in each nests in every STORE-WEEK combination.
+
+check_nest = data.groupby(["nest", "WEEK", "STORE"]).size().rename("Nest_Count")
+problematic = check_nest[(check_nest == 1) | (check_nest == 0)]
+
 # SAVE DATA
-data.to_csv(r"C:/Users/behri/OneDrive/Desktop/Master LSE/Essay/Ideas/Pepsi Coke/final_data.csv")
+#data.to_csv(r"C:/Users/behri/OneDrive/Desktop/Master LSE/Essay/Ideas/Pepsi Coke/final_data.csv")
 
 
 
