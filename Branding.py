@@ -487,8 +487,11 @@ data = calculate_effective_coverage(data)
 
 def nest_allocation(data): 
     def find_diet(row):
-        diet_label = "Diet" if row["Diet_Indicator"] == 1 else "Regular"
-        return f"{row['Flavour']}"
+        if row["Flavour"] == "Cola":
+            return "Cola"
+        else: 
+            return "Other"
+        
     data["nest"] = data.apply(find_diet, axis = 1)
     return data 
 
@@ -499,9 +502,10 @@ data = nest_allocation(data)
 
 check_nest = data.groupby(["nest", "WEEK", "STORE"]).size().rename("Nest_Count")
 problematic = check_nest[(check_nest == 1) | (check_nest == 0)]
+problematic = problematic.sort_values()
 
 # SAVE DATA
-#data.to_csv(r"C:/Users/behri/OneDrive/Desktop/Master LSE/Essay/Ideas/Pepsi Coke/final_data.csv")
+data.to_csv(r"C:/Users/behri/OneDrive/Desktop/Master LSE/Essay/Ideas/Pepsi Coke/final_data.csv")
 
 
 
