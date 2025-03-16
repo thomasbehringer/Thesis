@@ -131,4 +131,15 @@ instrument_merge = instrument_merge.merge(nest_week_stats, on=['WEEK', 'other_ne
 
 # I now have 6 + 1 = 7 Instruments - I will reconsider later about more instruments 
 
+## MERGE DATASETS 
 
+# I will now merge the two datasets in order to then have a final dataset which I can use to do my demand estimation and merger simulation 
+data_final = data.merge(instrument_merge, how = "inner", on = ["UPC", "STORE", "WEEK"])
+
+# I will select only the relevant columns...
+data_final = data_final.drop(["Unnamed: 0", "SALE", "PROFIT", "OK", "SIZE", "CASE", "NITEM", "Flavour", 
+                              "AVG_PRICE_WEEK", "PACKAGING_x", "date", "date_end", "quarter", "quarter_str", "date_str",
+                              "date_end_str", "store", "effective_coverage", "nest_y", "PRICE_y", "DESCRIP_y", "BRAND_y", 
+                              "COMPANY_y", "Liquid_ml_y", "PACKAGING_y"], axis = 1)
+
+data_final.to_csv(r"C:/Users/behri/OneDrive/Desktop/Master LSE/Essay/Ideas/Pepsi Coke/data_estimation.csv")
