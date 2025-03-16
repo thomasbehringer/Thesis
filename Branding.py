@@ -1,10 +1,12 @@
-# BRAND ASSIGNING 
-import pandas as pd 
-import numpy as np 
+# BRAND ASSIGNING
+import pandas as pd
+import numpy as np
 import re
-import datetime as dt 
+import datetime as dt
 
-#Function to assign brands: 
+# Function to assign brands:
+
+
 def assign_grouped_brand(desc):
     """
     Given a product description, return a grouped brand name.
@@ -18,11 +20,12 @@ def assign_grouped_brand(desc):
         ("Pepsi", ["CRYSTAL PEPSI", "PEPSI"]),
         ("Mountain Dew", ["MOUNTAIN DEW", "MTN DEW"]),
         ("Mug", ["MUG"]),
-        ("Slice", ["SLICE"]), 
+        ("Slice", ["SLICE"]),
         ("Lipton", ["LIPTON BRISK"]),
-        ("Coke",  ["COKE II", "CHERRY COKE", "COCA COLA", "COKE", "CAFF FREE CLASSIC CO"]),
+        ("Coke",  ["COKE II", "CHERRY COKE",
+         "COCA COLA", "COKE", "CAFF FREE CLASSIC CO"]),
         ("Sprite", ["SPRITE"]),
-        ("Barq", ["BARQ"]), 
+        ("Barq", ["BARQ"]),
         ("Tab", ["TAB"]),
         ("Minute Maid", ["MINUTE MAID"]),
         ("Enduro", ["ENDURO"]),
@@ -38,7 +41,7 @@ def assign_grouped_brand(desc):
         ("Canfield", ["CANFIELD"]),
         ("Tetley", ["TETELY", "TETLEY"]),
         ("Old Towne", ["OLD TOWNE", "OLD TOWN"]),
-        ("Orenzada",      ["ORENZADA"]),         
+        ("Orenzada",      ["ORENZADA"]),
         ("Lemoniada",     ["LEMONIADA"]),
         ("Seltzer",       ["WODA SODOWA", "SELTZER"]),
         ("Mandarynada",   ["MANDARYNDA"]),
@@ -55,8 +58,7 @@ def assign_grouped_brand(desc):
         ("Country Time",  ["COUNTRYTIME"]),
         ("Welch's",       ["WELCH'S"]),
     ]
-    
-    
+
     # Loop over the groups and return the first matching brand.
     for brand, keywords in brand_groups:
         for kw in keywords:
@@ -71,13 +73,13 @@ def assign_company(desc):
     return the historical parent company (1988–1996) that owned that brand.
     """
     brand = assign_grouped_brand(desc)
-    
+
     # Mapping from grouped brand to historic parent company.
     company_mapping = {
         "Pepsi": "PepsiCo",
         "Mountain Dew": "PepsiCo",
         "Mug": "PepsiCo",
-        "Slice": "PepsiCo", 
+        "Slice": "PepsiCo",
         "Lipton": "PepsiCo",
         "Coke": "Coca-Cola",
         "Sprite": "Coca-Cola",
@@ -114,34 +116,41 @@ def assign_company(desc):
         "Ocean Spray": "Ocean Spray",
         "Sunny Delight": "Sunny Delight"
     }
-    
+
     return company_mapping.get(brand, "Other")
-    
-data = pd.read_csv(r"C:/Users/behri/OneDrive/Desktop/Master LSE/Essay/Ideas/Pepsi Coke/cleaned_data.csv")
+
+
+data = pd.read_csv(
+    r"C:/Users/behri/OneDrive/Desktop/Master LSE/Essay/Ideas/Pepsi Coke/cleaned_data.csv")
 
 data["BRAND"] = data["DESCRIP"].apply(assign_grouped_brand)
 data["COMPANY"] = data["DESCRIP"].apply(assign_company)
 
-# Diet / Non-Diet 
+# Diet / Non-Diet
 
-def diet_indicator(desc): 
+
+def diet_indicator(desc):
     d = desc.upper()
-    if "DIET" in d: 
+    if "DIET" in d:
         return 1
     else:
-        return 0 
-    
-def no_caffeine_indicator(desc) :
-    d = desc.upper()
-    if ("CAFF." in d or "CAFF FREE" in d or "CAFF-FREE" in d or "CAFFEINE FREE" in d) : 
-        return 1 
-    else: 
         return 0
+
+
+def no_caffeine_indicator(desc):
+    d = desc.upper()
+    if ("CAFF." in d or "CAFF FREE" in d or "CAFF-FREE" in d or "CAFFEINE FREE" in d):
+        return 1
+    else:
+        return 0
+
 
 data["Diet_Indicator"] = data["DESCRIP"].apply(diet_indicator)
 data["No_Caffeine_Indicator"] = data["DESCRIP"].apply(no_caffeine_indicator)
 
-#Create dummy variables for taste 
+# Create dummy variables for taste
+
+
 def assign_flavour_category(description: str) -> str:
     desc = description.upper()
 
@@ -176,15 +185,17 @@ def assign_flavour_category(description: str) -> str:
     # --- 5) Other ---
     return "Other"
 
+
 data["Flavour"] = data["DESCRIP"].apply(assign_flavour_category)
-dummy_vars = pd.get_dummies(data["Flavour"], prefix = "Flavour")
-dummy_vars = dummy_vars.drop(columns = ["Flavour_Other"])
-data = pd.concat([data, dummy_vars], axis = 1)
+dummy_vars = pd.get_dummies(data["Flavour"], prefix="Flavour")
+dummy_vars = dummy_vars.drop(columns=["Flavour_Other"])
+data = pd.concat([data, dummy_vars], axis=1)
 #data = data.drop(columns = ["Flavour"])
 
 
-#Create more precise variable that indicates the "amount of liquid" that is being bought
+# Create more precise variable that indicates the "amount of liquid" that is being bought
 OZ_TO_ML = 29.5735
+
 
 def convert_to_milliliters(size):
     # Standardize and trim
@@ -213,102 +224,113 @@ def convert_to_milliliters(size):
     if match:
         return float(match.group(1))
 
-    #5) Handle 24EA etc.
+    # 5) Handle 24EA etc.
     if size in ["24 EA", "24 PK", "24 PAC"]:
         return 24*355
-    
+
     return None
 
-def final_amount(data): 
+
+def final_amount(data):
     data["Liquid_ml"] = data["SIZE"].apply(convert_to_milliliters)
-    if "QTY" in data.columns: 
+    if "QTY" in data.columns:
         data["Liquid_ml"] = data["Liquid_ml"] * data["QTY"]
-    else: 
-        pass 
-    return data 
+    else:
+        pass
+    return data
+
 
 data = final_amount(data)
 
 ## Refine average price ##
-#Clear certain missing average prices
+# Clear certain missing average prices
 data["AVG_PRICE"] = data.groupby(["WEEK", "BRAND"])["PRICE"].transform("mean")
 data["AVG_PRICE_WEEK"] = data["AVG_PRICE"]
 data = data.drop(columns=["AVG_PRICE"])
 
+
 def assign_biggest_brands(avg_price):
-    if avg_price >= 4: 
+    if avg_price >= 4:
         return avg_price
-    else: 
-        return None 
+    else:
+        return None
+
 
 def assign_packaging_type(size, descrip):
     d = str(descrip).upper()
     size_upper = size.upper().strip()
     single_serve_bottles = {"EACH", "1 LT", "7.5 OZ", "16 OZ", "20 OZ"}
-    
-    if "CANS" in d: 
+
+    if "CANS" in d:
         return "Cans"
-    
-    if size_upper in ("2 LT", "3 LT"): 
+
+    if size_upper in ("2 LT", "3 LT"):
         return "Larger Bottles"
-    
-    if size_upper in single_serve_bottles: 
+
+    if size_upper in single_serve_bottles:
         return "Single-Serve Bottles"
-    
+
     return "Multi-Packs"
-    
+
 
 data["AVG_PRICE_WEEK"] = data["AVG_PRICE_WEEK"].apply(assign_biggest_brands)
 
-data["PACKAGING"] = data.apply(lambda row: assign_packaging_type(row["SIZE"], row["DESCRIP"]), axis = 1)
+data["PACKAGING"] = data.apply(
+    lambda row: assign_packaging_type(row["SIZE"], row["DESCRIP"]), axis=1)
 
-dummy_packaging = pd.get_dummies(data["PACKAGING"], prefix = "Package")
-dummy_packaging = dummy_packaging.drop(columns = ["Package_Single-Serve Bottles"])
+dummy_packaging = pd.get_dummies(data["PACKAGING"], prefix="Package")
+dummy_packaging = dummy_packaging.drop(
+    columns=["Package_Single-Serve Bottles"])
 
-data = pd.concat([data, dummy_packaging], axis = 1)
+data = pd.concat([data, dummy_packaging], axis=1)
 
-## Add promotion dummy 
+# Add promotion dummy
 
 data["Promotion"] = data["SALE"].notna().astype(int)
 
-## Add quarters 
+# Add quarters
 start_date = pd.to_datetime("1989-09-14")
 end_date = pd.to_datetime("1989-09-20")
-data["date"] = start_date + pd.to_timedelta((data["WEEK"] - 1) * 7, unit= "d")
-data["date_end"] = end_date + pd.to_timedelta((data["WEEK"] - 1) * 7, unit = "d")
-data["quarter"] = pd.PeriodIndex(data.date, freq = "Q")
+data["date"] = start_date + pd.to_timedelta((data["WEEK"] - 1) * 7, unit="d")
+data["date_end"] = end_date + pd.to_timedelta((data["WEEK"] - 1) * 7, unit="d")
+data["quarter"] = pd.PeriodIndex(data.date, freq="Q")
 data["quarter_str"] = data["quarter"].astype(str)
 
 data["date_str"] = data["date"].astype(str)
-data["date_end_str"] =data["date_end"].astype(str)
+data["date_end_str"] = data["date_end"].astype(str)
 
-## Add seasons 
+# Add seasons
 data["quarter_number"] = data["quarter_str"].str.split("Q").str[1]
 season_mapping = {
-    "1": "Winter", 
-    "2": "Spring", 
-    "3": "Summer", 
-    "4": "Autumn" 
+    "1": "Winter",
+    "2": "Spring",
+    "3": "Summer",
+    "4": "Autumn"
 }
 
 data["season"] = data["quarter_number"].map(season_mapping)
+dummy_season = pd.get_dummies(data["season"], prefix = "season")
+dummy_season = dummy_season.drop(columns = ["season_Winter"])
+
+data = pd.concat([data, dummy_season], axis = 1)
 
 ### CREATE HOLIDAY DUMMY ###
 
 # Cache to store holidays for a given year
 holiday_cache = {}
 
+
 def get_holidays(year):
     if year in holiday_cache:
         return holiday_cache[year]
-    
+
     holidays = {
         "Christmas": pd.Timestamp(year, 12, 25),
         "Halloween": pd.Timestamp(year, 10, 31),
         "4th of July": pd.Timestamp(year, 7, 4),
         "New Years Eve": pd.Timestamp(year, 12, 31)
     }
-    
+
     # President's Day (Third Monday in February)
     feb_first = pd.Timestamp(year, 2, 1)
     # Calculate offset to first Monday in February:
@@ -316,196 +338,278 @@ def get_holidays(year):
     first_monday_feb = feb_first + pd.Timedelta(days=offset)
     # Third Monday is two weeks after the first Monday:
     holidays["Presidents Day"] = first_monday_feb + pd.Timedelta(days=14)
-    
+
     # Labour Day (First Monday in September)
     sep_first = pd.Timestamp(year, 9, 1)
     offset = (7 - sep_first.weekday()) % 7
     holidays["Labour Day"] = sep_first + pd.Timedelta(days=offset)
-    
+
     # Memorial Day (Last Monday in May)
     may_last = pd.Timestamp(year, 5, 31)
     # If may_last is not Monday, subtract the necessary days
-    offset = may_last.weekday()  # Monday is 0; if not, this gives the number of days to subtract.
+    # Monday is 0; if not, this gives the number of days to subtract.
+    offset = may_last.weekday()
     holidays["Memorial Day"] = may_last - pd.Timedelta(days=offset)
-    
-    
+
     # Thanksgiving (Fourth thursday in November)
     nov_first = pd.Timestamp(year, 11, 1)
-    offset = (10  - nov_first.weekday()) % 7
-    fourth_thursday_nov = nov_first + pd.Timedelta(days = 21 + offset)
+    offset = (10 - nov_first.weekday()) % 7
+    fourth_thursday_nov = nov_first + pd.Timedelta(days=21 + offset)
     holidays["Thanksgiving"] = fourth_thursday_nov
-    
+
     easter_dates = {
-     1989: (3, 26),
-     1990: (4, 15),
-     1991: (3, 31),
-     1992: (4, 19),
-     1993: (4, 11),
-     1994: (4, 3),
-     1995: (4, 16),
-     1996: (4, 7),
+        1989: (3, 26),
+        1990: (4, 15),
+        1991: (3, 31),
+        1992: (4, 19),
+        1993: (4, 11),
+        1994: (4, 3),
+        1995: (4, 16),
+        1996: (4, 7),
     }
-    
-    if year in easter_dates: 
+
+    if year in easter_dates:
         m, d = easter_dates[year]
         holidays["Easter"] = pd.Timestamp(year, m, d)
-        
+
     # Cache the computed holidays for this year
     holiday_cache[year] = holidays
     return holidays
 
+
 def assign_holiday(date, date_end):
     start = pd.to_datetime(date)
     end = pd.to_datetime(date_end)
-    
+
     # Assume the holiday's year is the same as the start of the week.
     year = start.year
-    
+
     # Retrieve the holidays for the given year (using caching)
     holidays = get_holidays(year)
-    
+
     # Check if any holiday falls within the week
-    holidays_in_week = [name for name, hol_date in holidays.items() if start <= hol_date <= end]
-    
+    holidays_in_week = [name for name,
+                        hol_date in holidays.items() if start <= hol_date <= end]
+
     return ", ".join(holidays_in_week) if holidays_in_week else "No Holiday"
 
-data["holiday"] = data.apply(lambda x: assign_holiday(x["date"], x["date_end"]), axis=1)
+
+data["holiday"] = data.apply(
+    lambda x: assign_holiday(x["date"], x["date_end"]), axis=1)
+
 
 def is_holiday(holiday):
     if holiday == "No Holiday":
-        return 0 
-    return 1 
+        return 0
+    return 1
+
 
 data["holiday_indicator"] = data["holiday"].apply(is_holiday)
 unique_holiday_data = data[["holiday", "date"]].drop_duplicates()
 
-#Drop old columns
+# Drop old columns
 
-data = data.drop(columns = ['PRICE_HEX', 'PROFIT_HEX', 'COM_CODE','Unnamed: 0.1', 'Unnamed: 0'])
+data = data.drop(columns=['PRICE_HEX', 'PROFIT_HEX',
+                 'COM_CODE', 'Unnamed: 0.1', 'Unnamed: 0'])
 
-##Add further control variables
-data_demographics = pd.read_stata(r"C:/Users/behri/OneDrive/Desktop/Master LSE/Essay/Ideas/Pepsi Coke/demo.dta")
+# Add further control variables
+data_demographics = pd.read_stata(
+    r"C:/Users/behri/OneDrive/Desktop/Master LSE/Essay/Ideas/Pepsi Coke/demo.dta")
 
-data_demographics = data_demographics[data_demographics["mmid"].isna() == False]
+data_demographics = data_demographics[data_demographics["mmid"].isna(
+) == False]
 
-data_demographics_for_merge = data_demographics[["store", "age9", "age60", "ethnic", "educ", "nocar", "income", "hsizeavg"]]
+data_demographics_for_merge = data_demographics[[
+    "store", "age9", "age60", "ethnic", "educ", "nocar", "income", "hsizeavg"]]
 data = pd.merge(
     data,
     data_demographics_for_merge,
-    how = "left", 
-    left_on = "STORE", 
-    right_on = "store"
+    how="left",
+    left_on="STORE",
+    right_on="store"
 )
 
-def impute_mean(col):
-     mean_val = np.mean(col)
-     return col.fillna(mean_val)
 
-columns_to_impute = ("age9", "age60", "ethnic", "educ", "nocar", "income", "hsizeavg")
+def impute_mean(col):
+    mean_val = np.mean(col)
+    return col.fillna(mean_val)
+
+
+columns_to_impute = ("age9", "age60", "ethnic", "educ",
+                     "nocar", "income", "hsizeavg")
 
 for col in columns_to_impute:
     data[col] = impute_mean(data[col])
 
 
-## Remove Blood Glucose Screen (key: UPC = 179)
+# Remove Blood Glucose Screen (key: UPC = 179)
 data = data[data["UPC"] != 179]
 
-## Find the first month where there is more than just one brand (Pepsi)
+# Find the first month where there is more than just one brand (Pepsi)
 data_more_than_one_brand = data[(data["COMPANY"] != "PepsiCo")]
 data_more_than_one_brand = data_more_than_one_brand.sort_values(["WEEK"])
 data = data[data["WEEK"] >= 147]
-## Remove smaller brands (following Allender and Richards (2012) approach)
+# Remove smaller brands (following Allender and Richards (2012) approach)
 
 # Identify the sum of sales of all brands and take 40 biggest brands
-data_sum_brands = data.groupby(by = ["UPC", "DESCRIP"], axis = 0)["MOVE"].sum()
-data_sum_brands = data_sum_brands.sort_values(ascending = False)
+data_sum_brands = data.groupby(by=["UPC", "DESCRIP"], axis=0)["MOVE"].sum()
+data_sum_brands = data_sum_brands.sort_values(ascending=False)
 data_sum_brands = data_sum_brands.iloc[0:39]
 
 # Merge to old dataframe (inner)
-data = data.merge(data_sum_brands, how = "inner", on = ["UPC", "DESCRIP"]) 
-data = data.rename(columns = {"MOVE_y": "SUM_MOVE", "MOVE_x": "MOVE"})
+data = data.merge(data_sum_brands, how="inner", on=["UPC", "DESCRIP"])
+data = data.rename(columns={"MOVE_y": "SUM_MOVE", "MOVE_x": "MOVE"})
 data = data.sort_values(["WEEK"])
 
-# Create Brand-Dummies for Brand Loyalty 
-company_dummies = pd.get_dummies(data["COMPANY"], prefix = "brand_")
-data = pd.concat([data, company_dummies], axis = 1)
+# Create Brand-Dummies for Brand Loyalty
+company_dummies = pd.get_dummies(data["COMPANY"], prefix="brand_")
+data = pd.concat([data, company_dummies], axis=1)
 
-## Add outside option - Definition as given by Mariuzzo (2003) - Determine the maximum daily consumption per person per day in Chicago and "relative market size" is 330ml per day 
-data["total_liquid_sold"] = data["MOVE"] * data["Liquid_ml"]
-data_consumption = data.groupby(["WEEK"])[["total_liquid_sold", "MOVE"]].sum()
 
-#Because our model assumes that we only buy one "option" per customer, we can calculate the number of liquid consumed by those who came in the store per day per person
-data_demographics["household_mean"] = np.mean(data_demographics["hsizeavg"])
-data_consumption["daily_consumption"] = data_consumption["total_liquid_sold"] / (data_consumption["MOVE"] * 7 * data_demographics["hsizeavg"].mean())
+# Calculate liquid sold per observation
+data["liquid_sold"] = data["MOVE"] * data["Liquid_ml"]
 
-# Define potential market size as 500ml a day per person 
-avg_serving_size = (data["Liquid_ml"].mean()) / 7
-data_consumption["outside_move"] = (550 - data_consumption["daily_consumption"]) / avg_serving_size
-data_consumption["total_moves"] = data_consumption["MOVE"] + data_consumption["outside_move"]
-total_moves = data_consumption["total_moves"]
+# ---------------------------
+# STEP 1: Compute observed totals at the market level (WEEK-STORE)
+# ---------------------------
+market_totals = data.groupby(["WEEK", "STORE"]).agg(
+    total_liquid_sold=("liquid_sold", "sum"),
+    total_moves=("MOVE", "sum")
+).reset_index()
 
-# Calculate the market share as Move_i / Total_Move where Total_Move = Number of observed moves + outside_moves -> hypothetical market size of 500 ml consumption per person per day 
-data = data.merge(total_moves, on = "WEEK", how = "left")
-data["market_share"] = data["MOVE"] / data["total_moves"]
+# ---------------------------
+# STEP 2: Compute the potential liquid sold in each market
+# ---------------------------
+# The potential consumption per household (per move) is:
+#    potential_per_household = 500 ml/day * 7 days * (avg household size)
+avg_household_size = data_demographics["hsizeavg"].mean()
+potential_per_household = 500 * 7 * avg_household_size
 
-# Create distance metric in order to assess effective store coverage of a product 
+# Then, the potential liquid for the market is:
+market_totals["potential_liquid"] = potential_per_household * \
+    market_totals["total_moves"]
+
+# ---------------------------
+# STEP 3: Compute the outside option ratio for each market
+# ---------------------------
+# If the observed total liquid is less than potential, there is an outside option.
+# Compute the ratio (potential/observed - 1) and clip it to zero when observed is high.
+market_totals["outside_option_ratio"] = (
+    market_totals["potential_liquid"] / market_totals["total_liquid_sold"]) - 1
+market_totals["outside_option_ratio"] = market_totals["outside_option_ratio"].clip(
+    lower=0)
+
+# Create a denominator term that scales the market shares:
+market_totals["denom"] = 1 + market_totals["outside_option_ratio"]
+
+# ---------------------------
+# STEP 4: Merge these market-level values back into the main data
+# ---------------------------
+data = pd.merge(data,
+                market_totals[["WEEK", "STORE", "total_liquid_sold",
+                               "outside_option_ratio", "denom"]],
+                on=["WEEK", "STORE"],
+                how="left")
+
+# ---------------------------
+# STEP 5: Compute factual and adjusted market shares for each product within the market
+# ---------------------------
+# Factual market share (based on liquid sold):
+data["factual_market_share"] = data["liquid_sold"] / data["total_liquid_sold"]
+
+# Adjusted market share (scaling the factual shares to include the outside option):
+data["adjusted_market_share"] = data["factual_market_share"] / data["denom"]
+
+# Also compute the outside option market share at the market level:
+data["outside_market_share"] = data["outside_option_ratio"] / data["denom"]
+
+# Take logarithm and create variable "LHS" for estimation purposes
+
+data["adjusted_market_share"] = np.log(data["adjusted_market_share"])
+data["outside_market_share"] = np.log(data["outside_market_share"])
+
+data["LHS"] = data["adjusted_market_share"] - data["outside_market_share"]
+# Create distance metric in order to assess effective store coverage of a product
+
+
 def calculate_effective_coverage(df):
-    
-    total_sales = df.groupby("WEEK")["MOVE"].sum().reset_index(name="total_move")
-    
-    
-    store_week_sales = df.groupby(["WEEK", "STORE"])["MOVE"].sum().reset_index(name="store_move")
+
+    total_sales = df.groupby(
+        "WEEK")["MOVE"].sum().reset_index(name="total_move")
+
+    store_week_sales = df.groupby(["WEEK", "STORE"])[
+        "MOVE"].sum().reset_index(name="store_move")
     store_week_sales = store_week_sales.merge(total_sales, on="WEEK")
-    store_week_sales["store_weight"] = store_week_sales["store_move"] / store_week_sales["total_move"]
-    
-    
+    store_week_sales["store_weight"] = store_week_sales["store_move"] / \
+        store_week_sales["total_move"]
+
     store_products = df[["STORE", "WEEK", "NITEM"]].drop_duplicates()
     store_products = store_products.merge(
         store_week_sales[["STORE", "WEEK", "store_weight"]],
         on=["WEEK", "STORE"],
         how="left"
     )
-    
-    
-    effective_cov = store_products.groupby(["WEEK", "NITEM"])["store_weight"].sum().reset_index(name="effective_coverage")
+
+    effective_cov = store_products.groupby(["WEEK", "NITEM"])[
+        "store_weight"].sum().reset_index(name="effective_coverage")
     effective_cov["D_j"] = 1 - effective_cov["effective_coverage"]
-    
-    
+
     df = df.merge(effective_cov, on=["WEEK", "NITEM"], how="left")
     return df
 
+
 data = calculate_effective_coverage(data)
 
+# Now, in line with Mariuzzo et. al, I replace "distance" with log(Distance) and create an interaction term D_i * P_i
+# which I then use to estimate the model
+
+zero_distance = data[data["effective_coverage"] == 1]
+
+# There are products that are sold by all stores -> I add a small constant in this case in order to not divide by zero!
+data["D_j"] = data["D_j"].mask(data["D_j"] == 0, 0.001)
+
+
+data["D_j"] = np.log(data["D_j"])
+data["Distance_P"] = data["D_j"] * data["PRICE"]
 
 ### CREATE NESTING STRUCTURE ###
 
 # Note that the nesting structure is non-trivial and that there are potentially multiple levels to consider
-# I will first follow the nesting structure of Mariuzzo (2003) using certain product characteristics 
+# I will first follow the nesting structure of Mariuzzo (2003) using certain product characteristics
 # according to Berry(1994) - I consider 3 important variables that will determine substitution patterns:
 # Flavour (Cola, Lemon, Mixed Fruit, Orange, Other), Packaging (Cans, Larger Bottles, Multi-Packs, Single-Serve Bottles)
-# Diet/No Diet 
+# Diet/No Diet
 
-def nest_allocation(data): 
+
+def nest_allocation(data):
     def find_diet(row):
         if row["Flavour"] == "Cola":
             return "Cola"
-        else: 
+        else:
             return "Other"
-        
-    data["nest"] = data.apply(find_diet, axis = 1)
-    return data 
+
+    data["nest"] = data.apply(find_diet, axis=1)
+    return data
+
 
 data = nest_allocation(data)
 
-## When creating the nests, I need to verify that there are at least two products in each market-nest combination so that there exists the possibility for the consumer to substitute between these products within the nest
-## Because I define a market as a STORE-WEEK combination, I need there to be at least two products in each nests in every STORE-WEEK combination.
+# When creating the nests, I need to verify that there are at least two products in each market-nest combination so that there exists the possibility for the consumer to substitute between these products within the nest
+# Because I define a market as a STORE-WEEK combination, I need there to be at least two products in each nests in every STORE-WEEK combination.
 
-check_nest = data.groupby(["nest", "WEEK", "STORE"]).size().rename("Nest_Count")
+check_nest = data.groupby(["nest", "WEEK", "STORE"]
+                          ).size().rename("Nest_Count")
 problematic = check_nest[(check_nest == 1) | (check_nest == 0)]
 problematic = problematic.sort_values()
 
+# Create a combined key from the original columns
+data["packaging_season"] = data["PACKAGING"].astype(str) + "_" + data["season"].astype(str)
+
+# Generate dummy variables for each packaging_season combination
+dummy_packaging_season = pd.get_dummies(data["packaging_season"], prefix="dummy")
+
+# Concatenate the dummies with the original DataFrame
+data = pd.concat([data, dummy_packaging_season], axis=1)
+
 # SAVE DATA
 data.to_csv(r"C:/Users/behri/OneDrive/Desktop/Master LSE/Essay/Ideas/Pepsi Coke/final_data.csv")
-
-
-
