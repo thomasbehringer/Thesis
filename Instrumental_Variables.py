@@ -32,7 +32,7 @@ instrument_data["total_expenditure"] = instrument_data["Distance"] * instrument_
 # This instrument varies at the week-store level, we need it to vary at the product-week-store level in order to obtain a distinct instrument. 
 
 # In order for the instrument to vary at the product scale, I first interact the instrument with the variable "Liquid_ml", this introduces some variation across products
-instrument_merge = instrument_data.merge(data, how = "inner", left_on = ["store", "WEEK"], right_on = ["STORE", "WEEK"])[["UPC", "STORE", "WEEK", "PRICE", "DESCRIP", "BRAND", "COMPANY", "Liquid_ml", "PACKAGING", "Distance", "total_expenditure", "nest"]]
+instrument_merge = instrument_data.merge(data, how = "inner", left_on = ["store", "WEEK"], right_on = ["STORE", "WEEK"])[["UPC", "STORE", "WEEK", "PRICE", "DESCRIP", "BRAND", "COMPANY", "Liquid_ml", "PACKAGING", "Distance", "total_expenditure", "nest", "hyp_market"]]
 instrument_merge = instrument_merge.sort_values(by = ["STORE"])
 
 count = data.groupby(["WEEK", "STORE"]).size().rename("Count")

@@ -507,7 +507,7 @@ market_totals["denom"] = 1 + market_totals["outside_option_ratio"]
 # ---------------------------
 data = pd.merge(data,
                 market_totals[["WEEK", "STORE", "total_liquid_sold",
-                               "outside_option_ratio", "denom"]],
+                               "outside_option_ratio", "denom", "total_moves"]],
                 on=["WEEK", "STORE"],
                 how="left")
 
@@ -522,6 +522,11 @@ data["adjusted_market_share"] = data["factual_market_share"] / data["denom"]
 
 # Also compute the outside option market share at the market level:
 data["outside_market_share"] = data["outside_option_ratio"] / data["denom"]
+
+# Create "Hypothetical market" -> How big would the market had to have been in order for the market shares
+# without the outside option to be as large as they are with the outside option? 
+
+data["hyp_market"] = data["factual_market_share"] / data["adjusted_market_share"] * data["total_moves"]
 
 # Take logarithm and create variable "LHS" for estimation purposes
 
