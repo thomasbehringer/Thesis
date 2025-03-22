@@ -99,7 +99,6 @@ gini_revenue = gini_coefficient(revenue_values)
 print("Gini coefficient for sales:", gini_sales)
 print("Gini coefficient for revenue:", gini_revenue)
 
-
 # Plot average quarterly prices
     
 data["AVG_price_quarter"] = (data.groupby(["COMPANY", "quarter"]))["PRICE"].transform("mean")
