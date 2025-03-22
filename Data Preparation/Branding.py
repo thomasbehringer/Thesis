@@ -618,3 +618,5 @@ data = pd.concat([data, dummy_packaging_season], axis=1)
 
 # SAVE DATA
 data.to_csv(r"C:/Users/behri/OneDrive/Desktop/Master LSE/Essay/Ideas/Pepsi Coke/final_data.csv")
+
+#test
