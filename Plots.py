@@ -14,21 +14,27 @@ data_raw = pd.read_csv(r"C:/Users/behri/OneDrive/Desktop/Master LSE/Essay/Ideas/
 # A: We need to look at the number of firms in each quarter/week? If the number of stores drastically declines/changes 
 # -> evidence for unbalanced dataset
 
-data_group_quarter = data.groupby(by = ["quarter"])["STORE"].count() 
+data_group_quarter = data.groupby(by = ["quarter"])["STORE"].nunique()
 
 # Plot this dataset to get an intuition for the degree of "missingness" of stores
 plt.figure(figsize = (12,6))
 plt.plot(data_group_quarter.index, data_group_quarter.values)
-plt.title("Number of Firms in each week of the dataset")
+plt.title("Number of Stores in each quarter of the dataset")
 plt.xlabel("Quarter")
-plt.ylabel("Number of Firms")
+plt.ylabel("Number of Stores")
 plt.xticks(rotation = 45)
 plt.legend()
 plt.show()
 
-# The dataset seems to start off with a low number of stores but then hits a peak and stays at that level 
+# The dataset seems to be fairly well - balanced -> there is almost no endogenous exit (there are also data quality issues to consider!) 
 
-# There seems to be some issues with endogenous entry in this dataset but I will not model this (talk about paper that talks about inconsistencies due to unbalanced dataset -> take data as is)
+# Q: Does the dataset exhibit MAR/MCAR/MNAR? 
+
+# A: To test missingness, we need to use an indicator for missingness 
+
+# Use Little's MCAR test in order to test for the possibility of the data missing completely at random -> no endogenous reason for missingness! 
+
+
 
 ## ANALYSE THE DISTRIBUTION OF THE HIGHEST COMPANIES 
 
@@ -40,25 +46,59 @@ plt.show()
 
 # In order to do this, I will consider different metrics...
 
-# 1. Simply take the number of all observations grouped by the company
+# 1. Take the number of sales for each company 
+data_group_company_sales = data.groupby(by = ["COMPANY"])["MOVE"].sum()
+data_group_company_sales = data_group_company_sales.sort_values(ascending = True)
 
-data_group_company = data.groupby(by = ["COMPANY"])["QTY"].sum()
-data_group_company = data_group_company.sort_values(ascending = True)
+sum_values = int(data_group_company_sales.sum())
+data_group_company_sales_pct = data_group_company_sales / sum_values
 
-sum_values = int(data_group_company.sum())
-data_group_company_pct = data_group_company / sum_values
+cumulative_sales = data_group_company_sales_pct.cumsum()
 
-cumulative = data_group_company_pct.cumsum()
+# 2. Take the total revenue of each firm
+data_group_company_rev = data.groupby(by = ["COMPANY"])["rev"].sum()
+data_group_company_rev = data_group_company_rev.sort_values(ascending = True)
 
+sum_values = int(data_group_company_rev.sum())
+data_group_company_rev_pct = data_group_company_rev / sum_values 
+
+cumulative_rev = data_group_company_rev_pct.cumsum()
+
+total_firms = len(cumulative_sales.index)
+
+data_plot = pd.DataFrame(data = [data_group_company_sales, data_group_company_rev]).T
+data_plot = data_plot.reset_index()
+
+data_plot["Number"] = range(1, len(data_plot) + 1)
+data_plot["Number"] = data_plot["Number"] / sum(data_plot["Number"]) 
+data_plot["Number"] = data_plot["Number"].cumsum()
+ 
 plt.figure(figsize = (12,6))
-plt.plot(cumulative.index, cumulative.values, label = "No. of products")
-plt.axline([0,0], [10,1])
+plt.plot(data_plot["Number"], cumulative_sales.values, label = "No. of sales", color = "red")
+plt.plot(data_plot["Number"], cumulative_rev.values, label = "Total revenue", color = "blue")
+plt.plot([0,1], [0,1], color = "black", linestyle = "--")
 plt.title("Lorenz Curve for firms")
-plt.xlabel("Firm")
-plt.ylabel("Percentage of entire market")
+plt.xlabel("Cumulative Share of Firms")
+plt.ylabel("Cumulative Share of Market")
 plt.xticks(rotation = 45)
 plt.legend()
 plt.show()
+
+# Calculating gini-coefficients: 
+def gini_coefficient(x): 
+    x = np.sort(np.array(x))
+    n = len(x)
+    index = np.arange(1, n+1)
+    
+    return (2 * np.sum(index * x) / (n * np.sum(x)) - (n+1) / n)
+
+sales_values = data_group_company_sales.values 
+revenue_values = data_group_company_rev.values
+gini_sales = gini_coefficient(sales_values)
+gini_revenue = gini_coefficient(revenue_values)
+print("Gini coefficient for sales:", gini_sales)
+print("Gini coefficient for revenue:", gini_revenue)
+
 
 # Plot average quarterly prices
     
