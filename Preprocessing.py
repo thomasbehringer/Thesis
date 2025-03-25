@@ -3,6 +3,7 @@ import numpy as np
 from statsmodels.stats.outliers_influence import variance_inflation_factor 
 from sklearn.linear_model import LinearRegression, Lasso, LassoCV
 from sklearn.metrics import mean_squared_error
+from stargazer.stargazer import Stargazer
 
 data = pd.read_csv(r"C:/Users/behri/OneDrive/Desktop/Master LSE/Essay/Ideas/Pepsi Coke/data_estimation.csv")
 
@@ -61,4 +62,38 @@ coefficients = pd.DataFrame({
 zero_coefficients = coefficients[coefficients["Coefficient"] == 0]
 
 # Among others, LASSO also identifies these features as potentially problematic! I will hence later drop these for robustness analysis...
-# aaa
+
+
+
+
+## ADD DESCRIPTIVE VARIABLES FOR THE MOST IMPORTANT VARIABLES IN THE ORIGINAL DATASET
+descriptive_data = data[["PRICE_x", "MOVE", "Liquid_ml_x", "rev"]]
+descriptive_data = descriptive_data.rename(columns = {"PRICE_x": "Price", "MOVE": "Total Quantity Sold", "rev": "Revenue Generated ($)", "Liquid_ml_x": "Amount of liquid per product"})
+descriptive_data = descriptive_data.describe()
+
+data_demographics = pd.read_stata(r"C:/Users/behri/OneDrive/Desktop/Master LSE/Essay/Ideas/Pepsi Coke/demo.dta")
+data_demographics = data_demographics.dropna(how = "all", axis = 1)
+data_demographics = data_demographics[["age60", "educ", "income"]]
+data_demographics = data_demographics.dropna(how = "all", axis = 0)
+data_demographics = data_demographics.rename(columns = {"age60": "% of > 60 year-olds", "educ": "% of college graduates", "income": "median log income"})
+descriptive_demo = data_demographics.describe()
+
+description = descriptive_data.join(descriptive_demo)
+for col in description.columns:
+    description[col] = description[col].astype(int)
+    
+description = description.T
+
+
+    
+latex_description = description.to_latex(
+    float_format = "%.2f",
+    caption = "Summary Statistics",
+    label = "tab:summary_stats",
+    column_format = "lcccccccc",
+    position = "htpb"
+)
+
+print(latex_description) 
+
+
