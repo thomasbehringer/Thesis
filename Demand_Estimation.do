@@ -62,13 +62,13 @@ estimates restore nested_logit_standard
 mergersim init, market(hyp_market_x) firm(firm_id) price(price_x) /// 
 nest(nest) quantity(move) alpha(-1.018006) sigmas(0.3061349)
 
-*Perform the merger simulation 
-mergersim market if inrange(week, 147, 200) & store == 48
+*Perform the merger simulation	 
+mergersim market if inrange(week, 147, 200) & store == 48, conduct(0.5)
 
 *Hypothetical merger between Coke and Dr. Pepper 
-mergersim simulate if week == 200, seller(7) buyer(4) detail 
+mergersim simulate if week == 200, seller(7) buyer(4) detail conduct(0.5)
 
 *Hypothetical merger between 7UP and Pepsi 
-mergersim simulate if week == 200, seller (1) buyer(10) detail 
+mergersim simulate if week == 200, seller (1) buyer(10) conduct(0.5) detail 
 
 end log 
