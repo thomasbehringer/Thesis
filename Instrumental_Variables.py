@@ -142,4 +142,6 @@ data_final = data_final.drop(["Unnamed: 0", "SALE", "PROFIT", "OK", "SIZE", "CAS
                               "date_end_str", "store", "effective_coverage", "nest_y", "PRICE_y", "DESCRIP_y", "BRAND_y", 
                               "COMPANY_y", "Liquid_ml_y", "PACKAGING_y"], axis = 1)
 
-data_final.to_csv(r"C:/Users/behri/OneDrive/Desktop/Master LSE/Essay/Ideas/Pepsi Coke/data_estimation.csv")
+## Determine summary statistics of the Gasoline Price 
+description = data_gasoline["GASREGW"].describe()
+#data_final.to_csv(r"C:/Users/behri/OneDrive/Desktop/Master LSE/Essay/Ideas/Pepsi Coke/data_estimation.csv")

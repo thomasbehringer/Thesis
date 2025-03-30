@@ -19,7 +19,6 @@ data_group_quarter = data.groupby(by = ["quarter"])["STORE"].nunique()
 # Plot this dataset to get an intuition for the degree of "missingness" of stores
 plt.figure(figsize = (12,6))
 plt.plot(data_group_quarter.index, data_group_quarter.values)
-plt.title("Number of Stores in each quarter of the dataset")
 plt.xlabel("Quarter")
 plt.ylabel("Number of Stores")
 plt.xticks(rotation = 45)
@@ -77,7 +76,6 @@ plt.figure(figsize = (12,6))
 plt.plot(data_plot["Number"], cumulative_sales.values, label = "No. of sales", color = "red")
 plt.plot(data_plot["Number"], cumulative_rev.values, label = "Total revenue", color = "blue")
 plt.plot([0,1], [0,1], color = "black", linestyle = "--")
-plt.title("Lorenz Curve for firms")
 plt.xlabel("Cumulative Share of Firms")
 plt.ylabel("Cumulative Share of Market")
 plt.xticks(rotation = 45)
@@ -118,3 +116,34 @@ plt.ylabel("Average Prices")
 plt.xticks(rotation=45)
 plt.legend()  # Add legend to differentiate brands
 plt.show()
+
+
+## Market shares by revenue over each quarter for the biggest companies 
+
+data_for_shares = data.copy()
+
+company_for_shares = ["PepsiCo", "Coca-Cola", "Dr Pepper Inc.", "7 Up Inc."]
+
+data_for_shares["COMPANY"] = data_for_shares["COMPANY"].apply(lambda x: x if x in company_for_shares else "Other")
+
+shares = data_for_shares.groupby(["COMPANY", "quarter"])["rev"].sum().reset_index()
+
+# Sort 
+shares["quarter"] =  pd.Categorical(shares["quarter"], ordered=True, categories=sorted(shares["quarter"].unique()))
+
+total_rev = shares.groupby("quarter")["rev"].sum().reset_index(name="total_rev")
+
+shares = shares.merge(total_rev, on="quarter")
+shares["market_share"] = shares["rev"] / shares["total_rev"]
+
+pivot_df = shares.pivot(index="quarter", columns="COMPANY", values="market_share").fillna(0)
+
+# Plot
+pivot_df.plot(kind="area", stacked=True, figsize=(12, 6))
+plt.ylabel("Market Share")
+plt.xlabel("Quarter")
+plt.legend(title="Company", loc="upper left")
+plt.tight_layout()
+plt.show()
+
+
